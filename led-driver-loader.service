@@ -1,0 +1,14 @@
+[Unit]
+Description=Load Custom WS281x Driver for Raspberry Pi 5
+After=network.target
+
+[Service]
+Type=oneshot
+# This environment variable will be set by the main install script
+Environment="PI_USER=pi" 
+ExecStart=/usr/local/bin/load_led_driver.sh
+RemainAfterExit=true
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
