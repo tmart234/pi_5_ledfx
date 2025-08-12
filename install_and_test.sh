@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-#      Definitive Pi 5 WS2812B Installation & Test Script (v28 - Final)
+#      Definitive Pi 5 WS2812B Installation & Test Script (v29 - Final)
 # ==============================================================================
 # This script is designed to be run from within a cloned Git repository on a
 # FRESH Raspberry Pi OS Lite (64-bit) installation. It assumes helper files
@@ -41,7 +41,6 @@ echo "Purge complete."
 # --- STEP 2: INSTALL SYSTEM DEPENDENCIES ---
 echo "--> Updating system and installing build tools..."
 sudo apt-get update
-# THE DEFINITIVE FIX: Add the device-tree-compiler package
 sudo apt-get install -y git cmake python3-pip python3-venv scons device-tree-compiler
 
 # --- STEP 3: BUILD & INSTALL THE CORE C LIBRARY ---
@@ -84,7 +83,6 @@ void rp1_ws281x_pwm_remove(struct platform_device *pdev);\
 sed -i 's/int rp1_ws281x_pwm_remove(struct platform_device \*pdev)/void rp1_ws281x_pwm_remove(struct platform_device *pdev)/' rp1_ws281x_pwm.c
 sed -i '/void rp1_ws281x_pwm_remove(struct platform_device \*pdev)/,/}/ s/return 0;/return;/' rp1_ws281x_pwm.c
 make
-# THE DEFINITIVE FIX: Generate the .dtbo file after building the module
 ./dts.sh
 echo "Kernel module and overlay built successfully."
 
@@ -107,6 +105,9 @@ echo "Python wrapper installed into the virtual environment."
 
 # --- STEP 6: CREATE AND ENABLE PERSISTENCE SERVICE ---
 echo "--> Creating and enabling boot service for LED driver..."
+# THE DEFINITIVE FIX: Copy the compiled overlay to the system directory
+sudo cp $HOME/rpi_ws281x/rp1_ws281x_pwm/rp1_ws281x_pwm.dtbo /boot/firmware/overlays/
+
 sudo cp "$SCRIPT_DIR/load_led_driver.sh" /usr/local/bin/load_led_driver.sh
 sudo cp "$SCRIPT_DIR/led-driver-loader.service" /etc/systemd/system/led-driver-loader.service
 sudo chmod +x /usr/local/bin/load_led_driver.sh
@@ -126,3 +127,4 @@ echo ""
 echo "After rebooting, you can test your lights at any time with:"
 echo "sudo $HOME/ledfx_venv/bin/python $SCRIPT_DIR/hw_test.py"
 echo ""
+
