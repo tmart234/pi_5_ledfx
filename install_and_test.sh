@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-#      Definitive Pi 5 WS2812B Installation & Test Script (v26 - Final)
+#      Definitive Pi 5 WS2812B Installation & Test Script (v27 - Final)
 # ==============================================================================
 # This script is designed to be run from within a cloned Git repository on a
 # FRESH Raspberry Pi OS Lite (64-bit) installation. It assumes helper files
@@ -15,7 +15,7 @@
 # 4. ./install_and_test.sh
 # ==============================================================================
 
-# Prevent the script from being run as root.
+# THE DEFINITIVE FIX #1: Prevent the script from being run as root.
 if [ "$EUID" -eq 0 ]; then
   echo "ERROR: This script must NOT be run with sudo or as the root user."
   echo "Please run it as your normal user: ./install_and_test.sh"
@@ -24,6 +24,9 @@ fi
 
 # Exit immediately if any command fails.
 set -e
+
+# THE DEFINITIVE FIX #5: Get the script's own directory to use absolute paths later.
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "--- Starting Definitive Pi 5 LED Installation ---"
 
@@ -101,9 +104,9 @@ echo "Python wrapper installed into the virtual environment."
 
 # --- STEP 6: CREATE AND ENABLE PERSISTENCE SERVICE ---
 echo "--> Creating and enabling boot service for LED driver..."
-# Assumes this script is run from the root of your git repo
-sudo cp ./load_led_driver.sh /usr/local/bin/load_led_driver.sh
-sudo cp ./led-driver-loader.service /etc/systemd/system/led-driver-loader.service
+# Use the SCRIPT_DIR variable for a robust path
+sudo cp "$SCRIPT_DIR/load_led_driver.sh" /usr/local/bin/load_led_driver.sh
+sudo cp "$SCRIPT_DIR/led-driver-loader.service" /etc/systemd/system/led-driver-loader.service
 
 sudo chmod +x /usr/local/bin/load_led_driver.sh
 
@@ -124,5 +127,5 @@ echo "The system is now fully installed and the driver will load automatically o
 echo "Please REBOOT now to apply all changes: sudo reboot"
 echo ""
 echo "After rebooting, you can test your lights at any time with:"
-echo "sudo $HOME/ledfx_venv/bin/python $HOME/hw_test.py"
+echo "sudo $HOME/ledfx_venv/bin/python $SCRIPT_DIR/hw_test.py"
 echo ""
