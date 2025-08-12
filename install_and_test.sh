@@ -1,18 +1,14 @@
 #!/bin/bash
 
 # ==============================================================================
-#      Definitive Pi 5 WS2812B Installation & Test Script (v29 - Final)
+#      Definitive Pi 5 WS2812B Installation & Test Script (v30 - Final)
 # ==============================================================================
-# This script is designed to be run from within a cloned Git repository on a
-# FRESH Raspberry Pi OS Lite (64-bit) installation. It assumes helper files
-# (hw_test.py, load_led_driver.sh, led-driver-loader.service) are in the
-# same directory.
+# This script uses the official config.txt method for driver persistence.
 #
 # USAGE:
-# 1. git clone https://github.com/tmart234/pi_5_ledfx.git
-# 2. cd pi_5_ledfx
-# 3. chmod +x install_and_test.sh
-# 4. ./install_and_test.sh
+# 1. Save this script as install_and_test.sh in your home directory.
+# 2. Make it executable: chmod +x install_and_test.sh
+# 3. Run it WITHOUT sudo: ./install_and_test.sh
 # ==============================================================================
 
 # Prevent the script from being run as root.
@@ -31,8 +27,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 echo "--- Starting Definitive Pi 5 LED Installation ---"
 
 # --- STEP 1: PURGE PREVIOUS ATTEMPTS ---
-echo "--> Removing any old source folders to ensure a clean slate..."
+echo "--> Removing any old source folders and service files..."
 deactivate &> /dev/null || true
+sudo systemctl disable led-driver-loader.service &> /dev/null || true
+sudo rm -f /etc/systemd/system/led-driver-loader.service
+sudo rm -f /usr/local/bin/load_led_driver.sh
 sudo rm -rf $HOME/ledfx_venv
 sudo rm -rf $HOME/rpi_ws281x
 sudo rm -rf $HOME/rpi-ws281x-python
@@ -44,7 +43,7 @@ sudo apt-get update
 sudo apt-get install -y git cmake python3-pip python3-venv scons device-tree-compiler
 
 # --- STEP 3: BUILD & INSTALL THE CORE C LIBRARY ---
-echo "--> Cloning and building the core C library (rpi_ws281x)..."
+echo "--> Cloning and building the core C library..."
 cd $HOME
 git clone https://github.com/jgarff/rpi_ws281x.git
 cd rpi_ws281x
@@ -61,7 +60,7 @@ cd build
 cmake ..
 make
 sudo make install
-echo "C library installed system-wide."
+echo "C library installed."
 
 # --- STEP 4: PATCH & BUILD THE KERNEL MODULE ---
 echo "--> Patching and building the Pi 5 kernel module..."
@@ -103,28 +102,27 @@ sudo $HOME/ledfx_venv/bin/python setup.py install
 deactivate
 echo "Python wrapper installed into the virtual environment."
 
-# --- STEP 6: CREATE AND ENABLE PERSISTENCE SERVICE ---
-echo "--> Creating and enabling boot service for LED driver..."
-# THE DEFINITIVE FIX: Copy the compiled overlay to the system directory
+# --- STEP 6: CONFIGURE SYSTEM FOR BOOT ---
+echo "--> Configuring system to load driver on boot..."
+# Copy the compiled overlay to the system directory
 sudo cp $HOME/rpi_ws281x/rp1_ws281x_pwm/rp1_ws281x_pwm.dtbo /boot/firmware/overlays/
 
-sudo cp "$SCRIPT_DIR/load_led_driver.sh" /usr/local/bin/load_led_driver.sh
-sudo cp "$SCRIPT_DIR/led-driver-loader.service" /etc/systemd/system/led-driver-loader.service
-sudo chmod +x /usr/local/bin/load_led_driver.sh
-sudo sed -i "s|%%HOME%%|$HOME|g" /usr/local/bin/load_led_driver.sh
-sudo sed -i "s|%%USER%%|$USER|g" /etc/systemd/system/led-driver-loader.service
-sudo systemctl daemon-reload
-sudo systemctl enable led-driver-loader.service
-echo "Service created and enabled."
+# Remove any old conflicting entries from config.txt
+sudo sed -i '/^dtoverlay=rp1_ws281x_pwm/d' /boot/firmware/config.txt
+sudo sed -i '/^dtoverlay=ws281x/d' /boot/firmware/config.txt
+
+# Add the new, correct overlay to the end of config.txt
+echo "dtoverlay=rp1_ws281x_pwm" | sudo tee -a /boot/firmware/config.txt
+echo "Boot configuration updated."
 
 # --- STEP 7: FINAL INSTRUCTIONS ---
 echo ""
 echo "--- INSTALLATION COMPLETE ---"
 echo ""
-echo "The system is now fully installed and the driver will load automatically on boot."
+echo "The system is now fully installed and configured to load the driver on boot."
 echo "Please REBOOT now to apply all changes: sudo reboot"
 echo ""
-echo "After rebooting, you can test your lights at any time with:"
+echo "After rebooting, the driver will be loaded automatically. You can test your lights with:"
 echo "sudo $HOME/ledfx_venv/bin/python $SCRIPT_DIR/hw_test.py"
 echo ""
 
