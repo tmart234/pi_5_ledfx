@@ -11,7 +11,7 @@ rmmod rp1_ws281x_pwm &> /dev/null || true
 
 # Load the new driver and configure the hardware
 insmod $DRIVER_DIR/rp1_ws281x_pwm.ko
-dtoverlay -d $DRIVER_DIR rp1_ws281x_pwm
+dtoverlay rp1_ws281x_pwm
 pinctrl set 18 a3 pn
 
 echo "WS281x LED driver loaded for Pi 5."
