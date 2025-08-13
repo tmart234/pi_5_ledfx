@@ -1,11 +1,11 @@
 [Unit]
 Description=Load Custom WS281x Driver for Raspberry Pi 5
-After=network.target
+# This tells the service to wait until the system is fully booted
+After=multi-user.target
 
 [Service]
 Type=oneshot
-# This environment variable will be set by the main install script
-Environment="PI_USER=pi" 
+# Use the full path to the script
 ExecStart=/usr/local/bin/load_led_driver.sh
 RemainAfterExit=true
 StandardOutput=journal
