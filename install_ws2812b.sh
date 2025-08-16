@@ -10,8 +10,8 @@
 # USAGE:
 # 1. git clone https://github.com/tmart234/pi_5_ledfx.git
 # 2. cd pi_5_ledfx
-# 3. chmod +x install_and_test.sh
-# 4. ./install_and_test.sh
+# 3. chmod +x install_ws2812b.sh
+# 4. ./install_ws2812b.sh
 # ==============================================================================
 
 # Prevent the script from being run as root.
