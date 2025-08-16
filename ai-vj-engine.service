@@ -1,0 +1,14 @@
+[Unit]
+Description=AI VJ Engine for LedFx Control
+After=network-online.target sound.target
+Wants=led-driver-loader.service
+
+[Service]
+Type=simple
+ExecStart=/home/pi/ledfx_venv/bin/python /home/tmart234/pi_5_ledfx/ai_vj_engine.py
+User=pi
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
