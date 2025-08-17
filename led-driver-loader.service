@@ -1,8 +1,6 @@
 [Unit]
 Description=Load Custom WS281x Driver for Raspberry Pi 5
-# This is the critical change to make the service run later
-Wants=network-online.target
-After=network-online.target
+After=multi-user.target
 
 [Service]
 Type=oneshot
